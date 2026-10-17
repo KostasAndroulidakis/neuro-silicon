@@ -1,9 +1,24 @@
-# Simulation outputs (regenerated on every run)
-build/
+# Tiny Tapeout flow outputs
+runs/
+tt_submission/
+src/user_config.json
+src/config_merged.json
+test/gate_level_netlist.v
+
+# Simulation outputs
 *.vcd
 *.fst
+*.fst.hier
+test/sim_build/
+test/results.xml
+test/output/
 
-# Python / cocotb (for later)
+# Python
 __pycache__/
-sim_build/
-results.xml
+.pytest_cache/
+
+# Local virtualenv (uv)
+.venv/
+
+# vscode
+.vscode
