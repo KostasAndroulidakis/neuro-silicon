@@ -1,0 +1,9 @@
+# Simulation outputs (regenerated on every run)
+*.vcd
+*.fst
+sim
+
+# Python / cocotb (for later)
+__pycache__/
+sim_build/
+results.xml
