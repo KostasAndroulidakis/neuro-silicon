@@ -8,7 +8,7 @@ project:
   description:  "Spiking motion-direction detector: 2 LIF neurons + delay lines, SPI-configurable"
   language:     "Verilog"
   clock_hz:     10000           # TBD: slow clock so 1 tick ~ 0.1 ms (see docs/spec.md)
-  tiles: "1x1"
+  tiles: "1x2"
   top_module:  "tt_um_neuro_silicon"
   source_files:
     - "nm_params.vh"

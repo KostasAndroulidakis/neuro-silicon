@@ -9,7 +9,7 @@ sensors using two leaky integrate-and-fire (LIF) neurons and spike timing.
 An object passing left -> right makes `dir_lr` spike; right -> left makes `dir_rl` spike.
 
 Role: this is the **neuromorphic unit** of a larger navigation SoC (see soc-architecture.md).
-It is built to Tiny Tapeout's interface (fixed pins, 1x1 tile) so it can be taped out
+It is built to Tiny Tapeout's interface (fixed pins, 1x2 tile) so it can be taped out
 standalone at any time, but the tapeout itself is optional.
 
 ## 2. Pins
@@ -137,7 +137,19 @@ V bytes and counters are read-only (SOFT_RST clears them).
   fires at the limit (3+7=10), two ticks apart does not (0+7). Tunable over SPI.
 - clock_hz: one time_ref tick = TICK_DIV clk cycles (>= 8). At 10 kHz clk and TICK_DIV=8, 1 tick = 0.8 ms. Decide with DELAY.
 
-## 8. Status
+## 8. Area (Sky130, from the GDS workflow)
+
+| Build | Cells | Flip-flops | Area | Utilisation (1x1) |
+|---|---|---|---|---|
+| tick_gen only | 76 | 11 | - | 3.9 % |
+| + neuron_seq | 385 | 45 | - | 23 % |
+| full chip (SPI, regs, delays) | ~1000 | ~270 | 12684 um2 | ~77 % -> placement fails after hold buffers |
+
+At 77 % the resizer could not legalise its hold buffers (DPL-0036), so the project
+moved to a 1x2 tile (~38 %). Shrink options if 1x1 is ever needed: 3-bit DELAY (-16 FF),
+drop spike counters (-16 FF), narrower read mux.
+
+## 9. Status
 
 | Block             | Model | RTL             | Test  |
 |-------------------|-------|-----------------|-------|

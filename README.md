@@ -9,7 +9,7 @@ Tiny Tapeout (Sky130) flow; the neuromorphic unit of a larger navigation SoC
 
 Status: RTL complete, every block verified against a bit-exact Python model with
 cocotb, chip-level tests drive it through its pins (also at gate level in CI),
-GDS builds clean at ~25 % of a 1x1 tile.
+GDS builds clean at ~40 % of a 1x2 tile.
 
 - Specification and design decisions: [docs/spec.md](docs/spec.md)
 - Tiny Tapeout datasheet page: [docs/info.md](docs/info.md)

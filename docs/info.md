@@ -15,7 +15,7 @@ are all set over SPI, so the same silicon can be tuned to sensor spacing and obj
 Architecture: a single time-multiplexed LIF neuron (C. Frenkel's tinyODIN `lif_neuron.v`,
 unmodified) serves both neurons in 6 clock cycles per "biological tick"; the tick rate is
 a programmable divider of the clock. 12-bit membrane potentials with saturation, 4-bit
-signed weights (inhibitory synapses possible). About 25 % of a 1x1 tile.
+signed weights (inhibitory synapses possible). About 40 % of a 1x2 tile.
 
 ## How to test
 
