@@ -25,7 +25,7 @@ Fixed by Tiny Tapeout: 8 in, 8 out, 8 bidir, `clk`, `rst_n`. Our mapping lives i
 | uo[0]    | out | dir_lr     | 1-tick spike: motion left -> right       |
 | uo[1]    | out | dir_rl     | 1-tick spike: motion right -> left       |
 | uo[2]    | out | spi_miso   | SPI readback                             |
-| uo[3..4] | out | spike_a/b  | Raw neuron spikes (debug)                |
+| uo[3..4] | out | dir_lr/rl  | Copies of uo[0..1]                       |
 | uo[5]    | out | time_ref   | Slow tick (debug)                        |
 
 ## 3. Architecture
@@ -105,7 +105,7 @@ valid coincidence detector before any SPI traffic, but stays silent until `EN` i
 | 0x01      | `CTRL`          | RW  | 0x00   | [0] EN: 1 = neurons run, 0 = frozen (safe to configure; tinyODIN's SPI_GATE_ACTIVITY). [1] SOFT_RST: write 1 to clear v, delay lines, counters; self-clearing. |
 | 0x02      | `DELAY`         | RW  | 2      | [3:0] delay line length in time_ref ticks              |
 | 0x03      | `TICK_DIV`      | RW  | 8      | time_ref every TICK_DIV clk cycles; values < 8 are treated as 8 |
-| 0x10-0x13 | `NEUR_A`        | RW  | see vh | Neuron A 32-bit word, byte 0 = bits [7:0]. Layout: [31] DISABLE, [30:24] LEAK_STR, [23:12] THR, [11:0] V. Writing V while EN=1 is allowed but racy; use EN=0. |
+| 0x10-0x13 | `NEUR_A`        | RW  | see vh | Neuron A 32-bit word, byte 0 = bits [7:0]. Layout: [31] DISABLE, [30:24] LEAK_STR, [23:12] THR, [11:0] V. V is read-only (live); writes to bytes 0 and the V half of byte 1 are ignored. |
 | 0x14-0x17 | `NEUR_B`        | RW  | see vh | Neuron B word, same layout                             |
 | 0x20      | `W_A`           | RW  | 0x77   | [3:0] W_A1 (delay(spike_l) -> A), [7:4] W_A2 (spike_r -> A), both 4-bit signed |
 | 0x21      | `W_B`           | RW  | 0x77   | [3:0] W_B1 (delay(spike_r) -> B), [7:4] W_B2 (spike_l -> B) |
@@ -118,16 +118,17 @@ Unmapped addresses read as 0x00; writes to them are ignored.
 ### SPI protocol
 
 Mode 0 (CPOL=0, CPHA=0), MSB first, CS_n active low, one 16-bit transaction per CS_n pulse.
-SCK, MOSI and CS_n are sampled by the core clock (synchronous slave), so SCK must be
-at most clk/4.
+SCK, MOSI and CS_n are sampled by the core clock (synchronous slave, ~3 clk edge
+latency; MISO changes on the rising edge after the master samples), so SCK must be
+at most clk/8.
 
 ```text
 byte 0 (MOSI): [7] = 1 read / 0 write     [6:0] = address
 byte 1:        write -> data on MOSI       read -> data on MISO
 ```
 
-Writes take effect at the end of the transaction (CS_n rising edge), so a register
-never changes mid-byte.
+Writes take effect after the 16th SCK edge, so a register never changes mid-byte.
+V bytes and counters are read-only (SOFT_RST clears them).
 
 ## 7. Open questions
 

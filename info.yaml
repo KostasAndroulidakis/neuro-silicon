@@ -17,6 +17,9 @@ project:
     - "edge_detect.v"
     - "delay_line.v"
     - "neuron_seq.v"
+    - "spi_slave.v"
+    - "config_regs.v"
+    - "motion_detector.v"
     - "tt_um_neuro_silicon.v"
 
 pinout:
@@ -34,8 +37,8 @@ pinout:
   uo[0]: "dir_lr"
   uo[1]: "dir_rl"
   uo[2]: "spi_miso"
-  uo[3]: "spike_a (debug)"
-  uo[4]: "spike_b (debug)"
+  uo[3]: "dir_lr (copy)"
+  uo[4]: "dir_rl (copy)"
   uo[5]: "time_ref (debug)"
   uo[6]: ""
   uo[7]: ""

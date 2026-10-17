@@ -183,3 +183,78 @@ class DelayLine:
         else:
             self.pend = cur
         return out
+
+
+class ConfigRegs:
+    """Mirror of src/config_regs.v: the register map, with reset values from
+    nm_params.vh. v_*/cnt_* are owned by NeuronSeq and passed in for reads."""
+
+    def __init__(self):
+        self.en = 0
+        self.soft_rst = 0
+        self.delay = P["NM_DELAY_RST"]
+        self.tick_div = P["NM_TICK_DIV_RST"]
+        self.thr = [P["NM_THR_RST"]] * 2
+        self.leak = [P["NM_LEAK_RST"]] * 2
+        self.dis = [0, 0]
+        w = P["NM_W_RST"] & 0xF
+        self.w = [(w << 4) | w] * 2           # W_A, W_B bytes
+
+    # --- derived outputs (same packing as the RTL ports) ---
+    def cfg(self, n):
+        return (self.dis[n] << 19) | (self.leak[n] << 12) | self.thr[n]
+
+    @property
+    def w_pack(self):
+        return (self.w[1] << 8) | self.w[0]
+
+    def w_list(self):
+        """[a1, a2, b1, b2] as signed ints, for NeuronSeq.step()."""
+        def s4(x): return x - 16 if x & 8 else x
+        return [s4(self.w[0] & 0xF), s4(self.w[0] >> 4), s4(self.w[1] & 0xF), s4(self.w[1] >> 4)]
+
+    # --- bus ---
+    def step(self, rst, wr_en, wr_addr, wr_data):
+        """One clk: apply a write (if any). soft_rst is a 1-cycle pulse."""
+        self.soft_rst = 0
+        if rst:
+            self.__init__()
+            return
+        if not wr_en:
+            return
+        a, d = wr_addr, wr_data
+        if a == P["NM_REG_CTRL"]:
+            self.en, self.soft_rst = d & 1, (d >> 1) & 1
+        elif a == P["NM_REG_DELAY"]:
+            self.delay = d & ((1 << P["NM_DELAY_W"]) - 1)
+        elif a == P["NM_REG_TICK_DIV"]:
+            self.tick_div = d
+        elif a == P["NM_REG_W_A"]:
+            self.w[0] = d
+        elif a == P["NM_REG_W_B"]:
+            self.w[1] = d
+        else:
+            for n, base in enumerate((P["NM_REG_NEUR_A"], P["NM_REG_NEUR_B"])):
+                if a == base + 1:
+                    self.thr[n] = (self.thr[n] & 0xFF0) | (d >> 4)
+                elif a == base + 2:
+                    self.thr[n] = (self.thr[n] & 0x00F) | (d << 4)
+                elif a == base + 3:
+                    self.dis[n], self.leak[n] = d >> 7, d & 0x7F
+
+    def read(self, addr, v=(0, 0), cnt=(0, 0)):
+        a = addr
+        if a == P["NM_REG_ID"]:       return P["NM_ID"]
+        if a == P["NM_REG_CTRL"]:     return self.en
+        if a == P["NM_REG_DELAY"]:    return self.delay
+        if a == P["NM_REG_TICK_DIV"]: return self.tick_div
+        if a == P["NM_REG_W_A"]:      return self.w[0]
+        if a == P["NM_REG_W_B"]:      return self.w[1]
+        if a == P["NM_REG_CNT_A"]:    return cnt[0]
+        if a == P["NM_REG_CNT_B"]:    return cnt[1]
+        for n, base in enumerate((P["NM_REG_NEUR_A"], P["NM_REG_NEUR_B"])):
+            if a == base:     return v[n] & 0xFF
+            if a == base + 1: return ((self.thr[n] & 0xF) << 4) | (v[n] >> 8)
+            if a == base + 2: return self.thr[n] >> 4
+            if a == base + 3: return (self.dis[n] << 7) | self.leak[n]
+        return 0

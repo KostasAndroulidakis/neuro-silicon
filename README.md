@@ -3,7 +3,13 @@
 # neuro-silicon
 
 A tiny digital spiking neural network chip: two LIF neurons that detect the
-direction of motion between two sensors. Built for Tiny Tapeout (Sky130).
+direction of motion between two sensors, configurable over SPI. Built on the
+Tiny Tapeout (Sky130) flow; the neuromorphic unit of a larger navigation SoC
+([docs/soc-architecture.md](docs/soc-architecture.md)).
+
+Status: RTL complete, every block verified against a bit-exact Python model with
+cocotb, chip-level tests drive it through its pins (also at gate level in CI),
+GDS builds clean at ~25 % of a 1x1 tile.
 
 - Specification and design decisions: [docs/spec.md](docs/spec.md)
 - Tiny Tapeout datasheet page: [docs/info.md](docs/info.md)
@@ -14,6 +20,7 @@ direction of motion between two sensors. Built for Tiny Tapeout (Sky130).
 ```
 info.yaml          Tiny Tapeout metadata: top module, tiles, pinout, source list (SSOT)
 src/               RTL, one module per file; nm_params.vh holds all widths/defaults (SSOT)
+                   tt_um_neuro_silicon.v (TT wrapper) > motion_detector.v (top) > blocks
 pyproject.toml     Python dependencies for tests + model (SSOT, locked in uv.lock)
 test/              cocotb tests (one file per block) + Python golden model
 docs/              spec, block diagram, datasheet page
@@ -28,7 +35,8 @@ cd test
 uv run make
 ```
 
-Waveforms land in `test/tb.fst` (open with GTKWave or Surfer).
+`make blocks` runs every block against its Python model; `make` runs the chip-level
+tests through the Tiny Tapeout pins. Waveforms land in `test/tb.fst` (GTKWave or Surfer).
 
 ## Credits
 

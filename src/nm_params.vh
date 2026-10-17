@@ -35,4 +35,16 @@
 `define NM_TICK_DIV_RST  8'd8     // minimum legal value (= NM_SEQ_CYCLES rounded up)
 `define NM_ID            8'hA5
 
+// --- Register map (docs/spec.md section 6 is the human-readable copy) ----------
+`define NM_REG_ID        7'h00
+`define NM_REG_CTRL      7'h01   // [0] EN, [1] SOFT_RST (write-1, self-clearing)
+`define NM_REG_DELAY     7'h02
+`define NM_REG_TICK_DIV  7'h03
+`define NM_REG_NEUR_A    7'h10   // 4 bytes, little-endian neuron word
+`define NM_REG_NEUR_B    7'h14
+`define NM_REG_W_A       7'h20   // [3:0] w_a1, [7:4] w_a2
+`define NM_REG_W_B       7'h21
+`define NM_REG_CNT_A     7'h30
+`define NM_REG_CNT_B     7'h31
+
 `endif

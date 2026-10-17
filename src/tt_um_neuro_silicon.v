@@ -2,15 +2,14 @@
  * neuro-silicon: Tiny Tapeout wrapper.
  *
  * Responsibilities of this file (and nothing else):
- *   1. map Tiny Tapeout's fixed pins to named internal signals (see info.yaml)
+ *   1. map Tiny Tapeout's fixed pins to named signals (see info.yaml)
  *   2. synchronise the external active-low reset into an internal active-high one
- *   3. instantiate the chip blocks (motion_detector once it exists)
+ *   3. instantiate the chip top level (motion_detector)
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 `default_nettype none
-`include "nm_params.vh"
 
 module tt_um_neuro_silicon (
     input  wire [7:0] ui_in,    // dedicated inputs
@@ -24,15 +23,9 @@ module tt_um_neuro_silicon (
 );
 
     // --- 1. Pin mapping (names match info.yaml) ---------------------------
-    wire sensor_l  = ui_in[0];
-    wire sensor_r  = ui_in[1];
-    wire spi_sck   = ui_in[2];
-    wire spi_mosi  = ui_in[3];
-    wire spi_cs_n  = ui_in[4];
+    wire dir_lr, dir_rl, spi_miso, time_ref;
 
-    wire dir_lr, dir_rl, spi_miso, spike_a, spike_b, time_ref;
-
-    assign uo_out  = {2'b00, time_ref, spike_b, spike_a, spi_miso, dir_rl, dir_lr};
+    assign uo_out  = {2'b00, time_ref, dir_rl, dir_lr, spi_miso, dir_rl, dir_lr};
     assign uio_out = 8'b0;      // bidirectional pins unused...
     assign uio_oe  = 8'b0;      // ...configured as inputs
 
@@ -43,64 +36,21 @@ module tt_um_neuro_silicon (
         rst      <= rst_meta;
     end
 
-    // --- 3. Chip blocks ----------------------------------------------------
-    // Blocks are added here as they are built and tested. Until config_regs
-    // exists, runtime settings are the reset constants from nm_params.vh.
-    tick_gen u_tick_gen (
+    // --- 3. The chip -------------------------------------------------------
+    motion_detector u_chip (
         .clk      (clk),
         .rst      (rst),
-        .en       (1'b1),
-        .tick_div (`NM_TICK_DIV_RST),
+        .sensor_l (ui_in[0]),
+        .sensor_r (ui_in[1]),
+        .spi_sck  (ui_in[2]),
+        .spi_mosi (ui_in[3]),
+        .spi_cs_n (ui_in[4]),
+        .spi_miso (spi_miso),
+        .dir_lr   (dir_lr),
+        .dir_rl   (dir_rl),
         .time_ref (time_ref)
     );
 
-    // Until config_regs exists, every runtime setting is its reset constant.
-    wire        en       = 1'b1;
-    wire        soft_rst = 1'b0;
-    wire [19:0] cfg      = {1'b0, `NM_LEAK_RST, `NM_THR_RST};
-
-    // Sensors -> spikes
-    wire spike_l, spike_r;
-    edge_detect u_edge_l (.clk(clk), .rst(rst), .level(sensor_l), .pulse(spike_l));
-    edge_detect u_edge_r (.clk(clk), .rst(rst), .level(sensor_r), .pulse(spike_r));
-
-    // Delayed copies: A listens for "L then R", B for "R then L"
-    wire spike_l_d, spike_r_d;
-    delay_line u_delay_l (
-        .clk(clk), .rst(rst), .en(en), .soft_rst(soft_rst), .time_ref(time_ref),
-        .delay(`NM_DELAY_RST), .in(spike_l), .out(spike_l_d));
-    delay_line u_delay_r (
-        .clk(clk), .rst(rst), .en(en), .soft_rst(soft_rst), .time_ref(time_ref),
-        .delay(`NM_DELAY_RST), .in(spike_r), .out(spike_r_d));
-
-    // Neuron core: in_syn = {b2, b1, a2, a1}
-    wire [`NM_V_W-1:0] v_a, v_b;
-    wire [7:0] cnt_a, cnt_b;
-    neuron_seq u_neuron_seq (
-        .clk      (clk),
-        .rst      (rst),
-        .en       (en),
-        .soft_rst (soft_rst),
-        .time_ref (time_ref),
-        .in_syn   ({spike_l, spike_r_d, spike_r, spike_l_d}),
-        .w_pack   ({4{`NM_W_RST}}),
-        .cfg_a    (cfg),
-        .cfg_b    (cfg),
-        .spike_a  (spike_a),
-        .spike_b  (spike_b),
-        .v_a      (v_a),
-        .v_b      (v_b),
-        .cnt_a    (cnt_a),
-        .cnt_b    (cnt_b)
-    );
-
-    // Direction outputs are the neuron spikes (spike_a/b pins duplicate them for debug).
-    assign dir_lr   = spike_a;
-    assign dir_rl   = spike_b;
-    assign spi_miso = 1'b0;             // spi_slave not built yet
-
-    // Keep the linter quiet about signals not consumed yet.
-    wire _unused = &{ena, spi_sck, spi_mosi, spi_cs_n, ui_in[7:5], uio_in,
-                     v_a, v_b, cnt_a, cnt_b, 1'b0};
+    wire _unused = &{ena, ui_in[7:5], uio_in, 1'b0};
 
 endmodule
