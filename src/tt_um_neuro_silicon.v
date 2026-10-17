@@ -4,7 +4,7 @@
  * Responsibilities of this file (and nothing else):
  *   1. map Tiny Tapeout's fixed pins to named internal signals (see info.yaml)
  *   2. synchronise the external active-low reset into an internal active-high one
- *   3. instantiate the chip top level (motion_detector) -- not yet written
+ *   3. instantiate the chip blocks (motion_detector once it exists)
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -43,17 +43,26 @@ module tt_um_neuro_silicon (
         rst      <= rst_meta;
     end
 
-    // --- 3. Chip top level -------------------------------------------------
-    // TODO: instantiate motion_detector here. Until then, outputs are idle.
+    // --- 3. Chip blocks ----------------------------------------------------
+    // Blocks are added here as they are built and tested. Until config_regs
+    // exists, runtime settings are the reset constants from nm_params.vh.
+    tick_gen u_tick_gen (
+        .clk      (clk),
+        .rst      (rst),
+        .en       (1'b1),
+        .tick_div (`NM_TICK_DIV_RST),
+        .time_ref (time_ref)
+    );
+
+    // Not yet built: outputs idle.
     assign dir_lr   = 1'b0;
     assign dir_rl   = 1'b0;
     assign spi_miso = 1'b0;
     assign spike_a  = 1'b0;
     assign spike_b  = 1'b0;
-    assign time_ref = 1'b0;
 
     // Keep the linter quiet about inputs not consumed yet.
-    wire _unused = &{ena, rst, sensor_l, sensor_r, spi_sck, spi_mosi, spi_cs_n,
+    wire _unused = &{ena, sensor_l, sensor_r, spi_sck, spi_mosi, spi_cs_n,
                      ui_in[7:5], uio_in, 1'b0};
 
 endmodule

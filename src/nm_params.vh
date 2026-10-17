@@ -23,7 +23,8 @@
 `define NM_DELAY_W    4     // delay line length: 0..15 time_ref ticks
 `define NM_TICK_DIV_W 8     // time_ref every TICK_DIV clk cycles
 `define NM_SEQ_CYCLES 6     // clk cycles the sequencer needs per time_ref tick
-                            // (2 neurons x {syn1, syn2, leak}); TICK_DIV must be >= this
+                            // (2 neurons x {syn1, syn2, leak})
+`define NM_TICK_DIV_MIN 8   // tick_gen clamps TICK_DIV below this; must be >= NM_SEQ_CYCLES
 
 // --- Reset values ----------------------------------------------------------
 `define NM_THR_RST       12'd10   // coincidence: 7 + 7 = 14 >= 10, a single 7 < 10

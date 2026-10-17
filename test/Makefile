@@ -1,10 +1,13 @@
 # cocotb simulation flow (Icarus Verilog).
-#   make            run all tests at RTL level
-#   make GATES=yes  run against the gate-level netlist from the GDS build
+#
+#   make                  top level (tb.v wrapper) with test_smoke
+#   make BLOCK=tick_gen   one block, driven directly by cocotb (no Verilog tb),
+#                         with test_<block>.py
+#   make blocks           every block in BLOCKS, one after the other
+#   make GATES=yes        top level against the gate-level netlist (after gds)
 #   make clean
 #
-# Source files are NOT listed here: they are read from ../info.yaml so that
-# the list exists in exactly one place.
+# Source files are read from ../info.yaml so the list exists in exactly one place.
 
 SIM ?= icarus
 FST ?= -fst
@@ -13,15 +16,16 @@ SRC_DIR = $(PWD)/../src
 
 PROJECT_SOURCES := $(shell python3 -c "import yaml; print(' '.join(yaml.safe_load(open('$(SRC_DIR)/../info.yaml'))['project']['source_files']))")
 
+# Blocks that have their own test_<block>.py
+BLOCKS = tick_gen
+
 ifneq ($(GATES),yes)
 
-# RTL simulation
-SIM_BUILD        = sim_build/rtl
+SIM_BUILD        = sim_build/rtl$(if $(BLOCK),_$(BLOCK),)
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
 else
 
-# Gate-level simulation (netlist produced by the gds workflow)
 SIM_BUILD        = sim_build/gl
 COMPILE_ARGS    += -DGL_TEST
 COMPILE_ARGS    += -DFUNCTIONAL
@@ -34,10 +38,23 @@ VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
 
 endif
 
-COMPILE_ARGS    += -I$(SRC_DIR)
-VERILOG_SOURCES += $(PWD)/tb.v
+COMPILE_ARGS += -I$(SRC_DIR)
 
+ifeq ($(BLOCK),)
+VERILOG_SOURCES += $(PWD)/tb.v
 TOPLEVEL = tb
 COCOTB_TEST_MODULES = test_smoke
+else
+TOPLEVEL = $(BLOCK)
+COCOTB_TEST_MODULES = test_$(BLOCK)
+endif
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
+
+.PHONY: blocks
+blocks:
+	@for b in $(BLOCKS); do \
+	  echo "=== block: $$b ==="; \
+	  $(MAKE) --no-print-directory BLOCK=$$b || exit 1; \
+	  python3 -m cocotb_tools.check_results results.xml || exit 1; \
+	done

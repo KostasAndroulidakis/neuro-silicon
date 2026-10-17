@@ -14,3 +14,7 @@ If you use this project in academic or commercial work, please also cite:
   C. Frenkel, M. Lefebvre, J.-D. Legat and D. Bol, "A 0.086-mm2 12.7-pJ/SOP 64k-Synapse
   256-Neuron Online-Learning Digital Spiking Neuromorphic Processor in 28-nm CMOS,"
   IEEE Trans. Biomed. Circuits Syst., vol. 13, no. 1, pp. 145-158, 2019.
+
+Lint note: lint.vlt waives Verilator's WIDTH warning for src/lif_neuron.v
+(`spike_out ? 8'd0 : state_core_next_i` zero-extends an 8-bit constant to 12 bits;
+harmless, and the file is kept byte-identical to upstream).

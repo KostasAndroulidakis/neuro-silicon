@@ -8,7 +8,9 @@ A tiny neuromorphic chip that detects the **direction of motion** between two
 sensors using two leaky integrate-and-fire (LIF) neurons and spike timing.
 An object passing left -> right makes `dir_lr` spike; right -> left makes `dir_rl` spike.
 
-Target: Tiny Tapeout, Sky130, 1x1 tile, shuttle TTSKY26d (deadline 2026-11-30).
+Role: this is the **neuromorphic unit** of a larger navigation SoC (see soc-architecture.md).
+It is built to Tiny Tapeout's interface (fixed pins, 1x1 tile) so it can be taped out
+standalone at any time, but the tapeout itself is optional.
 
 ## 2. Pins
 
@@ -28,7 +30,7 @@ Fixed by Tiny Tapeout: 8 in, 8 out, 8 bidir, `clk`, `rst_n`. Our mapping lives i
 
 ## 3. Architecture
 
-```
+```ascii
                          +-----------+
  SPI (from RP2040/MCU) ->| spi_slave |-> config registers (threshold, leak,
                          +-----------+   weights, delay, tick divider)
@@ -73,7 +75,7 @@ The neuron is combinational: it receives one *event* at a time and returns the n
 state. Events are serialised by `neuron_seq`, so two spikes arriving in the same tick
 are applied one after the other.
 
-```
+```text
 synaptic event (syn_event=1, time_ref=0):  v_next = sat12( v + sign_extend(w) )
 leak event     (syn_event=1, time_ref=1):  v_next = v - leak_str, clamped at 0
                                            (negative v leaks towards 0 from below)
@@ -119,7 +121,7 @@ Mode 0 (CPOL=0, CPHA=0), MSB first, CS_n active low, one 16-bit transaction per 
 SCK, MOSI and CS_n are sampled by the core clock (synchronous slave), so SCK must be
 at most clk/4.
 
-```
+```text
 byte 0 (MOSI): [7] = 1 read / 0 write     [6:0] = address
 byte 1:        write -> data on MOSI       read -> data on MISO
 ```
@@ -135,14 +137,14 @@ never changes mid-byte.
 
 ## 8. Status
 
-| Block             | Model | RTL  | Test  |
-|-------------------|-------|------|-------|
-| wrapper           | -     | done | smoke |
-| lif_neuron        | -     | done (tinyODIN) | - |
-| tick_gen          |       |      |       |
-| neuron_seq        |       |      |       |
-| edge_detect       |       |      |       |
-| delay_line        |       |      |       |
-| config_regs       |       |      |       |
-| spi_slave         |       |      |       |
-| motion_detector   |       |      |       |
+| Block             | Model | RTL             | Test  |
+|-------------------|-------|-----------------|-------|
+| wrapper           | -     | done            | smoke |
+| lif_neuron        | -     | done (tinyODIN) |   -   |
+| tick_gen          | done  | done            | done  |
+| neuron_seq        |       |                 |       |
+| edge_detect       |       |                 |       |
+| delay_line        |       |                 |       |
+| config_regs       |       |                 |       |
+| spi_slave         |       |                 |       |
+| motion_detector   |       |                 |       |
