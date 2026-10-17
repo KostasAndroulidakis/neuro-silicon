@@ -17,7 +17,7 @@ SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES := $(shell python3 -c "import yaml; print(' '.join(yaml.safe_load(open('$(SRC_DIR)/../info.yaml'))['project']['source_files']))")
 
 # Blocks that have their own test_<block>.py
-BLOCKS = tick_gen neuron_seq
+BLOCKS = tick_gen edge_detect delay_line neuron_seq
 
 ifneq ($(GATES),yes)
 

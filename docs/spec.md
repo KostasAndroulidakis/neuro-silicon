@@ -132,7 +132,8 @@ never changes mid-byte.
 ## 7. Open questions
 
 - DELAY: depends on sensor spacing and object speed -> explore in Python model.
-- Coincidence window: how far apart can two spikes be and still fire? -> Python.
+- Coincidence window: with LEAK_RST=4, THR=10, W=7: same tick fires (14), adjacent tick
+  fires at the limit (3+7=10), two ticks apart does not (0+7). Tunable over SPI.
 - clock_hz: one time_ref tick = TICK_DIV clk cycles (>= 8). At 10 kHz clk and TICK_DIV=8, 1 tick = 0.8 ms. Decide with DELAY.
 
 ## 8. Status

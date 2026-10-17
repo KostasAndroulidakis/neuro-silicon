@@ -14,6 +14,8 @@ project:
     - "nm_params.vh"
     - "lif_neuron.v"
     - "tick_gen.v"
+    - "edge_detect.v"
+    - "delay_line.v"
     - "neuron_seq.v"
     - "tt_um_neuro_silicon.v"
 

@@ -54,21 +54,38 @@ module tt_um_neuro_silicon (
         .time_ref (time_ref)
     );
 
-    // Neuron core. Until edge_detect/delay_line/config_regs exist, the sensor
-    // pins feed the synapses directly as spikes and all settings are the reset
-    // constants: A gets {r, l}, B gets {l, r}.
+    // Until config_regs exists, every runtime setting is its reset constant.
+    wire        en       = 1'b1;
+    wire        soft_rst = 1'b0;
+    wire [19:0] cfg      = {1'b0, `NM_LEAK_RST, `NM_THR_RST};
+
+    // Sensors -> spikes
+    wire spike_l, spike_r;
+    edge_detect u_edge_l (.clk(clk), .rst(rst), .level(sensor_l), .pulse(spike_l));
+    edge_detect u_edge_r (.clk(clk), .rst(rst), .level(sensor_r), .pulse(spike_r));
+
+    // Delayed copies: A listens for "L then R", B for "R then L"
+    wire spike_l_d, spike_r_d;
+    delay_line u_delay_l (
+        .clk(clk), .rst(rst), .en(en), .soft_rst(soft_rst), .time_ref(time_ref),
+        .delay(`NM_DELAY_RST), .in(spike_l), .out(spike_l_d));
+    delay_line u_delay_r (
+        .clk(clk), .rst(rst), .en(en), .soft_rst(soft_rst), .time_ref(time_ref),
+        .delay(`NM_DELAY_RST), .in(spike_r), .out(spike_r_d));
+
+    // Neuron core: in_syn = {b2, b1, a2, a1}
     wire [`NM_V_W-1:0] v_a, v_b;
     wire [7:0] cnt_a, cnt_b;
     neuron_seq u_neuron_seq (
         .clk      (clk),
         .rst      (rst),
-        .en       (1'b1),
-        .soft_rst (1'b0),
+        .en       (en),
+        .soft_rst (soft_rst),
         .time_ref (time_ref),
-        .in_syn   ({sensor_r, sensor_l, sensor_r, sensor_l}),
+        .in_syn   ({spike_l, spike_r_d, spike_r, spike_l_d}),
         .w_pack   ({4{`NM_W_RST}}),
-        .cfg_a    ({1'b0, `NM_LEAK_RST, `NM_THR_RST}),
-        .cfg_b    ({1'b0, `NM_LEAK_RST, `NM_THR_RST}),
+        .cfg_a    (cfg),
+        .cfg_b    (cfg),
         .spike_a  (spike_a),
         .spike_b  (spike_b),
         .v_a      (v_a),
@@ -77,10 +94,10 @@ module tt_um_neuro_silicon (
         .cnt_b    (cnt_b)
     );
 
-    // Not yet built: outputs idle.
-    assign dir_lr   = 1'b0;
-    assign dir_rl   = 1'b0;
-    assign spi_miso = 1'b0;
+    // Direction outputs are the neuron spikes (spike_a/b pins duplicate them for debug).
+    assign dir_lr   = spike_a;
+    assign dir_rl   = spike_b;
+    assign spi_miso = 1'b0;             // spi_slave not built yet
 
     // Keep the linter quiet about signals not consumed yet.
     wire _unused = &{ena, spi_sck, spi_mosi, spi_cs_n, ui_in[7:5], uio_in,

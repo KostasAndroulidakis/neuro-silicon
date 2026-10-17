@@ -144,3 +144,42 @@ class NeuronSeq:
         if fire:
             self.cnt[n] = (self.cnt[n] + 1) & 0xFF
         return self.spike[0], self.spike[1]
+
+
+class EdgeDetect:
+    """Mirror of src/edge_detect.v: 2-FF synchroniser + rising-edge pulse."""
+
+    def __init__(self):
+        self.sync0 = self.sync1 = self.prev = 0
+
+    def step(self, rst: int, level: int) -> int:
+        """Advance one clk. Returns `pulse` as seen *after* this clock edge."""
+        if rst:
+            self.sync0 = self.sync1 = self.prev = 0
+        else:
+            self.sync0, self.sync1, self.prev = level, self.sync0, self.sync1
+        return int(self.sync1 and not self.prev)
+
+
+class DelayLine:
+    """Mirror of src/delay_line.v. step() returns `out` for the cycle being applied
+    (combinational from time_ref and the pre-edge registers)."""
+
+    DEPTH = 1 << P["NM_DELAY_W"]
+
+    def __init__(self):
+        self.pend = 0
+        self.sr = 0                      # bit k = stage k+1
+
+    def step(self, rst, en, soft_rst, time_ref, delay, spike_in) -> int:
+        cur = int((self.pend or spike_in) and en)
+        taps = (self.sr << 1) | cur
+        out = int(time_ref and (taps >> delay) & 1)
+        if rst or soft_rst:
+            self.pend, self.sr = 0, 0
+        elif time_ref:
+            self.pend = 0
+            self.sr = ((self.sr << 1) | cur) & ((1 << (self.DEPTH - 1)) - 1)
+        else:
+            self.pend = cur
+        return out

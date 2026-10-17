@@ -28,7 +28,8 @@
 
 // --- Reset values ----------------------------------------------------------
 `define NM_THR_RST       12'd10   // coincidence: 7 + 7 = 14 >= 10, a single 7 < 10
-`define NM_LEAK_RST      7'd1     // -1 per tick: a lone spike (7) decays in 7 ticks
+`define NM_LEAK_RST      7'd4     // -4 per tick: a lone spike (7) is gone in 2 ticks,
+                                  // so only same/adjacent-tick arrivals can sum to >= 10
 `define NM_W_RST         4'sd7    // all four synapses excitatory, max weight
 `define NM_DELAY_RST     4'd2     // TBD after Python exploration
 `define NM_TICK_DIV_RST  8'd8     // minimum legal value (= NM_SEQ_CYCLES rounded up)
