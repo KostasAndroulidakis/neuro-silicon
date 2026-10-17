@@ -54,15 +54,36 @@ module tt_um_neuro_silicon (
         .time_ref (time_ref)
     );
 
+    // Neuron core. Until edge_detect/delay_line/config_regs exist, the sensor
+    // pins feed the synapses directly as spikes and all settings are the reset
+    // constants: A gets {r, l}, B gets {l, r}.
+    wire [`NM_V_W-1:0] v_a, v_b;
+    wire [7:0] cnt_a, cnt_b;
+    neuron_seq u_neuron_seq (
+        .clk      (clk),
+        .rst      (rst),
+        .en       (1'b1),
+        .soft_rst (1'b0),
+        .time_ref (time_ref),
+        .in_syn   ({sensor_r, sensor_l, sensor_r, sensor_l}),
+        .w_pack   ({4{`NM_W_RST}}),
+        .cfg_a    ({1'b0, `NM_LEAK_RST, `NM_THR_RST}),
+        .cfg_b    ({1'b0, `NM_LEAK_RST, `NM_THR_RST}),
+        .spike_a  (spike_a),
+        .spike_b  (spike_b),
+        .v_a      (v_a),
+        .v_b      (v_b),
+        .cnt_a    (cnt_a),
+        .cnt_b    (cnt_b)
+    );
+
     // Not yet built: outputs idle.
     assign dir_lr   = 1'b0;
     assign dir_rl   = 1'b0;
     assign spi_miso = 1'b0;
-    assign spike_a  = 1'b0;
-    assign spike_b  = 1'b0;
 
-    // Keep the linter quiet about inputs not consumed yet.
-    wire _unused = &{ena, sensor_l, sensor_r, spi_sck, spi_mosi, spi_cs_n,
-                     ui_in[7:5], uio_in, 1'b0};
+    // Keep the linter quiet about signals not consumed yet.
+    wire _unused = &{ena, spi_sck, spi_mosi, spi_cs_n, ui_in[7:5], uio_in,
+                     v_a, v_b, cnt_a, cnt_b, 1'b0};
 
 endmodule
