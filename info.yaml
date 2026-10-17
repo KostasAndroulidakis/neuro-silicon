@@ -11,6 +11,8 @@ project:
   tiles: "1x1"
   top_module:  "tt_um_neuro_silicon"
   source_files:
+    - "nm_params.vh"
+    - "lif_neuron.v"
     - "tt_um_neuro_silicon.v"
 
 pinout:

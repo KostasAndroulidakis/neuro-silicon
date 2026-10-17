@@ -1,0 +1,16 @@
+neuro-silicon
+Copyright (c) 2026 Kostas Androulidakis
+Licensed under the Apache License, Version 2.0.
+
+This project includes, unmodified, the following file from tinyODIN
+(https://github.com/ChFrenkel/tinyODIN, commit 18656534162a9de09b9954aea28fbfad7a7f8657):
+
+  src/lif_neuron.v  -- 12-bit LIF neuron update logic
+  Copyright (C) 2019-2022 UCLouvain, UZH, KU Leuven, TU Delft. Author: C. Frenkel.
+  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1 (Solderpad Hardware License v2.1,
+  which permits treating the work as Apache-2.0).
+
+If you use this project in academic or commercial work, please also cite:
+  C. Frenkel, M. Lefebvre, J.-D. Legat and D. Bol, "A 0.086-mm2 12.7-pJ/SOP 64k-Synapse
+  256-Neuron Online-Learning Digital Spiking Neuromorphic Processor in 28-nm CMOS,"
+  IEEE Trans. Biomed. Circuits Syst., vol. 13, no. 1, pp. 145-158, 2019.
