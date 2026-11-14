@@ -13,6 +13,9 @@
     // Separate gh login for containers (the host gh keeps its token in the keyring, which containers cannot reach)
     "source=${localEnv:HOME}/.config/gh-devcontainer,target=/headless/.config/gh,type=bind"
   ],
+  // GitHub's published Ed25519 host key, so git over SSH does not ask to confirm it after every rebuild.
+  // ssh reads the home folder from /etc/passwd (/home/designer), not from $HOME (/headless).
+  "postCreateCommand": "h=$(getent passwd \"$(id -un)\" | cut -d: -f6) && mkdir -p \"$h/.ssh\" && echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >> \"$h/.ssh/known_hosts\"",
   "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
   "workspaceFolder": "${localWorkspaceFolder}",
   "containerEnv": {
