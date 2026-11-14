@@ -51,6 +51,10 @@ endif
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
+# cocotb's clean only removes the current SIM_BUILD; also remove every per-block and gate-level build
+clean::
+	$(RM) -r sim_build
+
 .PHONY: blocks
 blocks:
 	@for b in $(BLOCKS); do \
