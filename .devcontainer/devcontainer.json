@@ -1,0 +1,35 @@
+{
+  "name": "neuro-silicon (IIC-OSIC-TOOLS)",
+  "image": "hpretl/iic-osic-tools-devcontainer:2026.10",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/headless/.claude,type=bind"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/headless/.claude",
+    "PDK": "sky130A",
+    "PDKPATH": "/foss/pdks/sky130A",
+    "STD_CELL_LIBRARY": "sky130_fd_sc_hd"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "mshr-h.veriloghdl",
+        "lramseyer.vaporview",
+        "ms-python.python",
+        "mhutchie.git-graph",
+        "github.vscode-pull-request-github",
+        "-dbaeumer.vscode-eslint"
+      ],
+      "settings": {
+        "verilog.languageServer.veribleVerilogLs.enabled": true,
+        "verilog.linting.linter": "verilator"
+      }
+    }
+  }
+}
