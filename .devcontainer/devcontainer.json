@@ -3,10 +3,15 @@
   "image": "hpretl/iic-osic-tools-devcontainer:2026.10",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {},
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+  // Runs on the host: create the gh login folder before Docker mounts it (a missing source becomes a root-owned folder)
+  "initializeCommand": "mkdir -p ${localEnv:HOME}/.config/gh-devcontainer",
   "mounts": [
-    "source=${localEnv:HOME}/.claude,target=/headless/.claude,type=bind"
+    "source=${localEnv:HOME}/.claude,target=/headless/.claude,type=bind",
+    // Separate gh login for containers (the host gh keeps its token in the keyring, which containers cannot reach)
+    "source=${localEnv:HOME}/.config/gh-devcontainer,target=/headless/.config/gh,type=bind"
   ],
   "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
   "workspaceFolder": "${localWorkspaceFolder}",
